@@ -3,5 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "author": "isaac.simmons@gmail.com",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^14.14.10",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.1.2"
+  }
 }

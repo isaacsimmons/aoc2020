@@ -1,16 +1,10 @@
-import { combinations } from '../utils/array';
-import { readInputFile } from '../utils/file';
+import { combinations, sum, product } from '../utils/array';
+import { readInputLines } from '../utils/file';
 
-const inputText = readInputFile(Number(process.env.DAY), process.env.FILE);
-
-const numbers = inputText.split('\n').filter(n => n.length > 0).map(Number);
-
-const c = combinations(numbers, 3);
-for (const combination of c) {
-    const sum = combination.reduce((a, b) => a+b, 0);
-    if (sum === 2020) {
-        const product = combination.reduce((a, b) => a * b, 1);
-        console.log(product);
+const lines = readInputLines().map(Number);
+for (const set of combinations(lines, 3)) {
+    if (sum(set) === 2020) {
+        console.log(product(set));
         break;
     }
 }

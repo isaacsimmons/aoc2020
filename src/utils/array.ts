@@ -141,3 +141,6 @@ export const minIndex = <T>(arr: T[]) => {
 };
 
 export const equals = <T>(arr1: T[], arr2: T[]) => arr1.length == arr2.length && arr1.every((val,idx) => val === arr2[idx]);
+
+export const sum = (arr: number[]) => arr.reduce((a,b) => a + b, 0);
+export const product = (arr: number[]) => arr.reduce((a, b) => a * b, 1);

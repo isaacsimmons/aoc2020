@@ -17,6 +17,63 @@ export const permute = <T>(input: T[]) => {
    return result;
 };
 
+const c = function *c<T>(rest: T[], choose: number, prefix: T[] = []): Generator<T[], void, void> {
+    //    loop over the items in "rest", pluck out each one in turn
+    //    add it to prefix, snip it out of rest, recurse with choose -= 1
+        for (let i = 0; i < rest.length + 1 - choose; i++) {
+            const newPrefix = [...prefix, rest[i]];
+            if (choose === 1) {
+                yield newPrefix;
+            } else {
+                const newRest = rest.slice(i + 1);
+                yield *c(newRest, choose - 1, newPrefix);
+            }
+        }
+    };
+    
+export const combinations = function *combinations<T>(arr: T[], choose: number): Generator<T[], void, void> {
+    if (choose < 0) {
+        throw new Error('Choose must be a positive value');
+    }
+    if (choose === 0) {
+        return;
+    }
+    if (choose > arr.length) {
+        throw new Error('Choose cannot be larger than the number of elements');
+    }
+
+    yield* c(arr, choose);
+};
+    
+const p = function *c<T>(rest: T[], choose: number, prefix: T[] = []): Generator<T[], void, void> {
+    //    loop over the items in "rest", pluck out each one in turn
+    //    add it to prefix, snip it out of rest, recurse with choose -= 1
+    for (let i = 0; i < rest.length; i++) {
+        const newPrefix = [...prefix, rest[i]];
+        if (choose === 1) {
+            yield newPrefix;
+        } else {
+            const newRest = [...rest];
+            newRest.splice(i, 1);
+            yield *c(newRest, choose - 1, newPrefix);
+        }
+    }
+};
+
+export const permutations = function *combinations<T>(arr: T[], choose: number): Generator<T[], void, void> {
+    if (choose < 0) {
+        throw new Error('Choose must be a positive value');
+    }
+    if (choose === 0) {
+        return;
+    }
+    if (choose > arr.length) {
+        throw new Error('Choose cannot be larger than the number of elements');
+    }
+
+    yield* p(arr, choose);
+};
+        
 export const chunk = <T>(arr: T[], size: number) => {
     if (arr.length % size !== 0) {
         throw new Error(`Attempted to chunk array of size ${arr.length} into chunks of size ${size}`)

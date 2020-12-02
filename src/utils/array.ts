@@ -144,3 +144,5 @@ export const equals = <T>(arr1: T[], arr2: T[]) => arr1.length == arr2.length &&
 
 export const sum = (arr: number[]) => arr.reduce((a,b) => a + b, 0);
 export const product = (arr: number[]) => arr.reduce((a, b) => a * b, 1);
+
+export const truthy = (val: any) => !!val;

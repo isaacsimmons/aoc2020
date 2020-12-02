@@ -1,3 +1,3 @@
-import { readInputFile } from '../utils/file';
+import { readInputLines } from '../utils/file';
 
-const inputText = readInputFile(Number(process.env.DAY), process.env.FILE);
+const inputLines = readInputLines();

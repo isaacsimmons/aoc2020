@@ -10,13 +10,7 @@ interface Line {
 }
 
 const isValid = (line: Line): boolean => {
-    let count = 0;
-    for(const char of line.password) {
-        if (char === line.char) {
-            count ++;
-        }
-    }
-    return count >= line.min && count <= line.max;
+    return (line.password[line.min - 1] === line.char) !== (line.password[line.max - 1] === line.char);
 };
 
 const parseLine = (s: string): Line => {

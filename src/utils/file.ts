@@ -14,5 +14,5 @@ export const readInputFile = (day?: number, name?: string, suffix?: string) => {
 };
 
 export const readInputLines = (day?: number, name?: string, suffix?: string) => {
-    return readInputFile(day, name, suffix).split('\n').filter(line => line.length > 0);
+    return readInputFile(day, name, suffix).split('\n');
 };

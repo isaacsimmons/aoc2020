@@ -22,7 +22,6 @@ const readMap = (lines: string[]): Map => {
 };
 
 const map = readMap(inputLines);
-//console.log(map);
 
 interface Coords {
     x: number;

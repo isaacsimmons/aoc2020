@@ -34,7 +34,14 @@ const parse = (lines: string[]): Passport[] => {
     return passports;
 }
 
-const requiredFields = ['byr',
+interface PassportValidationError {
+    field: string;
+    value: string|undefined;
+    message?: string;
+}
+
+const requiredFields = [
+    'byr',
     'iyr',
     'eyr',
     'hgt',
@@ -44,81 +51,75 @@ const requiredFields = ['byr',
 //    'cid',
 ];
 
-const rangeCheck = (s: string|undefined, digits: number, min: number, max: number): boolean => {
-    if (s === undefined) {
-        return false;
+const validateRange = (field: string, value: string|undefined, min: number, max: number): void => {
+    if (value === undefined) {
+        throw { field, value };
     }
-    if (s.match(/\d*/) === null) {
-        return false;
+    if (value.match(/\d*/) === null) {
+        throw { field, value, message: 'Non-numeric characters' };
     }
-    if (s.length !== digits) {
-        return false;
+    const num = Number(value);
+    if (num < min || num > max) {
+        throw { field, value, message: `${num} out of range ${min}-${max}` };
     }
-    const num = Number(s);
-    return num >= min && num <= max;
 };
 
-const isValid = (passport: Passport) => {
+const validateEyeColor = (value: string|undefined) => {
+    if (['amb', 'blu', 'brn', 'gry', 'grn', 'hzl', 'oth'].indexOf(value || '') === -1) {
+        throw {field: 'ecl', value };
+    }
+};
 
-    if (!rangeCheck(passport.byr, 4, 1920, 2002)) {
-        console.log('failed byr', passport.byr);
-        return false;
+const validateHairColor = (value: string|undefined) => {
+    if (!value) {
+        throw {field: 'hcl', value };
     }
-    if (!rangeCheck(passport.iyr, 4, 2010, 2020)) {
-        console.log('failed iyr', passport.iyr);
-        return false;
+    if (!value.match(/#[0-9a-f]{6}/)) {
+        throw {field: 'hcl', value };
     }
-    if (!rangeCheck(passport.eyr, 4, 2020, 2030)) {
-        console.log('failed eyr', passport.eyr);
-        return false;
+};
+
+const validateHeight = (value: string|undefined) => {
+    if (!value || value.length < 3) {
+        throw { field: 'hgt', value };
     }
-    if (!rangeCheck(passport.pid, 9, 0, 999999999)) {
-        console.log('failed pid', passport.pid);
-        return false;
-    }
-    // cid ignored
-    if (['amb', 'blu', 'brn', 'gry', 'grn', 'hzl', 'oth'].indexOf(passport.ecl) === -1) {
-        console.log('failed eye', passport.ecl);
-        return false;
-    }
-    if (!passport.hcl) {
-        console.log('failed hcl 1');
-        return false;
-    }
-    if (!passport.hcl.match(/#[0-9a-f]{6}/)) {
-        console.log('failed hcl', passport.hcl);
-        return false;
-    }
-    if (!passport.hgt) {
-        console.log('failed hgt 1');
-        return false;
-    }
-    const units = passport.hgt.substr(passport.hgt.length - 2);
-    const value = passport.hgt.substr(0, passport.hgt.length - 2);
-    console.log('units, value', units, value);
-    if (units === 'cm') {
-        if (!rangeCheck(value, 3, 150, 193)) {
-            return false;
-        }
-    } else if (units === 'in') {
-        if (!rangeCheck(value, 2, 59, 76)) {
-            return false;
-        }
+    const unit = value.substr(value.length - 2);
+    const qty = value.substr(0, value.length - 2);
+    if (unit === 'cm') {
+        validateRange('hgt', qty, 150, 193);
+    } else if (unit === 'in') {
+        validateRange('hgt', qty, 59, 76);
     } else {
-        return false;
+        throw {field: 'hgt', value, message: `Invalid units: ${unit}`};
     }
+};
 
-    return true;
+const validatePid = (value: string|undefined) => {
+    if (!value || !value.match(/\d{9}/)) {
+        throw {field: 'pid', value};
+    }
+};
+
+const validate = (passport: Passport): void => {
+    validateRange('byr', passport.byr, 1920, 2002);
+    validateRange('iyr', passport.iyr, 2010, 2020);
+    validateRange('eyr', passport.eyr, 2020, 2030);
+    validatePid(passport.pid);
+    // cid ignored
+    validateEyeColor(passport.ecl);
+    validateHairColor(passport.hcl);
+    validateHeight(passport.hgt);
 };
 
 const passports = parse(inputLines);
-//console.log('passportssss', passports);
+
 let validCount = 0;
 passports.forEach(passport => {
-    const valid = isValid(passport);
-    if (valid) {
+    try {
+        validate(passport);
         validCount++;
+    } catch (err: PassportValidationError|unknown) {
+        console.log('Error:', err);
     }
-    console.log(passport, valid);
 });
 console.log('count', validCount);

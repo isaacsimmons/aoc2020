@@ -146,3 +146,20 @@ export const sum = (arr: number[]) => arr.reduce((a,b) => a + b, 0);
 export const product = (arr: number[]) => arr.reduce((a, b) => a * b, 1);
 
 export const truthy = (val: any) => !!val;
+
+export const splitDoubleNewline = function *splitDoubleNewline(lines: string[]): Generator<string[], void, void> {
+    let chunk: string[] = [];
+    for (const line of lines) {
+        if (line === '') {
+            if (chunk.length) {
+                yield chunk;
+                chunk = [];
+            }
+        } else {
+            chunk.push(line);
+        }
+    }
+    if (chunk.length) {
+        yield chunk;
+    }
+};

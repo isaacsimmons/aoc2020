@@ -2,27 +2,25 @@ import { readInputLines } from '../utils/file';
 
 const inputLines = readInputLines();
 
-interface Passport {
-    [key: string]: string;
-}
+type Passport = Map<string, string>;
 
 const parse = (lines: string[]): Passport[] => {
     const passports: Passport[] = [];
 
-    let passport: Passport = {};
+    let passport: Passport = new Map();
     let anyData = false;
     for (const line of lines) {
         if (line === '') {
             if (anyData) {
                 passports.push(passport);
                 anyData = false;
-                passport = {};
+                passport = new Map();
             }
         } else {
             const fields = line.split(' ');
             fields.forEach(field => {
                 const [key, value] = field.split(':'); // TODO: limit?
-                passport[key] = value;
+                passport.set(key, value);
                 anyData = true;
             });
         }
@@ -74,7 +72,7 @@ const validateHairColor = (value: string|undefined) => {
     if (!value) {
         throw {field: 'hcl', value };
     }
-    if (!value.match(/#[0-9a-f]{6}/)) {
+    if (!value.match(/^#[0-9a-f]{6}$/)) {
         throw {field: 'hcl', value };
     }
 };
@@ -95,20 +93,25 @@ const validateHeight = (value: string|undefined) => {
 };
 
 const validatePid = (value: string|undefined) => {
-    if (!value || !value.match(/\d{9}/)) {
+    if (!value || !value.match(/^\d{9}$/)) {
         throw {field: 'pid', value};
     }
 };
 
 const validate = (passport: Passport): void => {
-    validateRange('byr', passport.byr, 1920, 2002);
-    validateRange('iyr', passport.iyr, 2010, 2020);
-    validateRange('eyr', passport.eyr, 2020, 2030);
-    validatePid(passport.pid);
+    validateRange('byr', passport.get('byr'), 1920, 2002);
+    validateRange('iyr', passport.get('iyr'), 2010, 2020);
+    validateRange('eyr', passport.get('eyr'), 2020, 2030);
+    validatePid(passport.get('pid'));
     // cid ignored
-    validateEyeColor(passport.ecl);
-    validateHairColor(passport.hcl);
-    validateHeight(passport.hgt);
+    validateEyeColor(passport.get('ecl'));
+    validateHairColor(passport.get('hcl'));
+    validateHeight(passport.get('hgt'));
+};
+
+const writePassport = (passport: Passport) => {
+    console.log([...passport.entries()].map(([key, value]) => `${key}:${value}`).join(' '));
+    console.log();
 };
 
 const passports = parse(inputLines);
@@ -118,6 +121,7 @@ passports.forEach(passport => {
     try {
         validate(passport);
         validCount++;
+        // writePassport(passport);
     } catch (err: PassportValidationError|unknown) {
         console.log('Error:', err);
     }

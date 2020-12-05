@@ -163,3 +163,28 @@ export const splitDoubleNewline = function *splitDoubleNewline(lines: string[]):
         yield chunk;
     }
 };
+
+export type Collection<T> = Set<T> | Array<T>;
+
+const isSet = <T>(c: Collection<T>): c is Set<T> => c.constructor.name === 'Set';
+const toSet = <T>(c: Collection<T>): Set<T> => isSet(c) ? c : new Set(c);
+const toArray = <T>(c: Collection<T>): Array<T> => isSet(c) ? [...c] : c;
+
+export const union = <T>(...collections: Collection<T>[]): Set<T> => {
+    const arrays = collections.map(toArray);
+    const joined = ([] as T[]).concat(...arrays);
+    return new Set(joined);
+};
+
+export const intersection = <T>(...collections: Collection<T>[]): Set<T> => {
+    const [firstColl, ...restColl] = collections;
+    const first = toArray(firstColl);
+    const rest = restColl.map(toSet);
+    return new Set(first.filter(item => rest.every(set => set.has(item))));
+};
+
+export const subtract = <T>(collection: Collection<T>, ...others: Collection<T>[]): Set<T> => {
+    const remainder = new Set(toSet(collection));
+    others.forEach(other => other.forEach((item: T) => remainder.delete(item)));
+    return remainder;
+};

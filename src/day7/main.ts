@@ -15,6 +15,7 @@ interface Contents {
 
 const contents = new Map<string, Map<string, number>>();
 const containedIn = new Map<string, Map<string, number>>();
+const leaves = new Set<string>();
 
 const saveEntry = (map: Map<string, Map<string, number>>, key1: string, key2: string, value: number) => {
     let inner: Map<string, number>|undefined = map.get(key1);
@@ -43,6 +44,7 @@ const parseContent = (s: string): Contents => {
 const parseLine = (s: string): Rule => {
     const [color, right] = s.split(' bags contain ');
     if (right === 'no other bags.') {
+        leaves.add(color);
         return { color, contents: []};
     }
     if (right[right.length - 1] !== '.') {
@@ -60,7 +62,7 @@ inputLines.forEach(line => {
     });
 });
 
-console.log(contents);
+//console.log(contents);
 
 const result = new Set<string>();
 const active = new Set(['shiny gold']);
@@ -84,5 +86,30 @@ while (active.size > 0) {
     check();
 }
 
-console.log(result);
-console.log(result.size);
+// console.log(result);
+// console.log(result.size);
+// console.log(leaves);
+
+const totalBags = new Map<string, number>([...leaves].map(color => [color, 0]));
+// console.log(totalBags);
+
+outer: while (contents.size) {
+    mid: for (const [color, bags] of contents.entries()) {
+        let numWithin = 0;
+        for (const [bagColor, bagQty] of bags) {
+            const n = totalBags.get(bagColor);
+            if (n === undefined) {
+                continue mid;
+            }
+            numWithin += (1 + n) * bagQty;
+        }
+        if (color === 'shiny gold') {
+            console.log('all done', numWithin);
+            break outer;
+        }
+        totalBags.set(color, numWithin);
+        contents.delete(color);
+    }
+}
+
+//console.log(totalBags);

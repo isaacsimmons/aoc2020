@@ -1,8 +1,8 @@
 import { intersection, splitDoubleNewline, sum, union } from '../utils/array';
-import { readInputLines } from '../utils/file';
+import { readNewlineSeparatedChunks } from '../utils/file';
 
-const inputLines = readInputLines();
-const groups = [...splitDoubleNewline(inputLines)]
+const inputChunks = readNewlineSeparatedChunks();
+const groups = inputChunks
   .map(answers => answers.map(answer => answer.split('')))
   .map(answers => intersection(...answers));
 const result = sum(groups.map(group => group.size));

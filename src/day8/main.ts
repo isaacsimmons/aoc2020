@@ -1,24 +1,43 @@
-import { truthy } from '../utils/array';
 import { readInputLines } from '../utils/file';
 
-const inputLines = readInputLines().filter(truthy);
+const inputLines = readInputLines();
 
 type Operator = 'nop' | 'acc' | 'jmp';
+
+function validateOperator(s: string): asserts s is Operator {
+    switch (s) {
+        case 'nop':
+        case 'acc':
+        case 'jmp':
+            return;
+        default:
+            throw new Error(`Invalid operator: ${s}`);
+    }
+}
+
 interface Instruction {
     op: Operator;
     value: number;
 }
 
+const parseSimpleInstruction = (op: Operator, value: string) => ({ op, value: Number(value) });
+
 const parseInstruction = (s: string): Instruction => {
-    const [op, value] = s.split(' ');
-    return {
-        op: op as Operator,
-        value: Number(value),
+    const [op, rest] = s.split(' ');
+    validateOperator(op);
+    switch (op) {
+        case 'jmp':
+            return parseSimpleInstruction(op, rest);
+        case 'acc':
+            return parseSimpleInstruction(op, rest);
+        case 'jmp':
+            return parseSimpleInstruction(op, rest);
+        default:
+            throw new Error(`Invalid operator: ${s}`);
     }
 };
 
 const program = inputLines.map(parseInstruction);
-
 
 const runProgram = (program: Instruction[]): {acc: number, success: boolean} => {
     let position = 0;
@@ -27,7 +46,6 @@ const runProgram = (program: Instruction[]): {acc: number, success: boolean} => 
         while (true) {
         if (positions.has(position)) {
             return {acc, success: false};
-            break;
         }
         if (position === program.length) {
             return {acc, success: true};
@@ -53,9 +71,6 @@ const runProgram = (program: Instruction[]): {acc: number, success: boolean} => 
         }
     }
 };
-
-
-console.log(runProgram(program));
 
 
 const tweak = (program: Instruction[], position: number): Instruction[] => {

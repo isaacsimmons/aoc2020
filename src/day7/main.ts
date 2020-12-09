@@ -1,7 +1,7 @@
 import { truthy } from '../utils/array';
 import { readInputLines } from '../utils/file';
 
-const inputLines = readInputLines().filter(truthy);
+const inputLines = readInputLines();
 
 interface Rule {
     color: string;

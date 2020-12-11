@@ -24,17 +24,31 @@ const parseRow = (s: string): Space[] => {
 const map = inputLines.map(parseRow);
 
 
-const isOccupied = (x: number, y: number, map: Space[][]): number => {
+const isOccupied2 = (x: number, y: number, map: Space[][]): Space | null => {
     if (y < 0 || x < 0 || y >= map.length || x >= map[0].length) {
-        return 0;
+        return null;
     }
-    return map[y][x] === 'occupied' ? 1 : 0;
+    return map[y][x];
+};
+
+const isOccupied = (x: number, y: number, dx: number, dy: number, map: Space[][]): number => {
+    let d = 1;
+    while (true) {
+        const space = isOccupied2(x + dx * d, y + dy * d, map);
+        if (space === null || space === 'empty') {
+            return 0;
+        }
+        if (space === 'occupied') {
+            return 1;
+        }
+        d++;
+    }
 };
 
 const countAdjacentOccupied = (x: number, y: number, map: Space[][]): number => {
-    return isOccupied(x - 1, y - 1, map) + isOccupied(x - 1, y, map) + isOccupied(x -1, y + 1, map)
-     + isOccupied(x, y-1, map) + isOccupied(x, y+ 1, map)
-    + isOccupied(x + 1, y - 1, map) + isOccupied(x + 1, y, map) + isOccupied(x+1, y+1, map);
+    return isOccupied(x, y, -1, -1, map) + isOccupied(x, y, -1, 0, map) + isOccupied(x, y, -1, 1, map)
+     + isOccupied(x, y, 0, -1, map) + isOccupied(x, y, 0, 1, map)
+    + isOccupied(x, y, 1, -1, map) + isOccupied(x, y, 1, 0, map) + isOccupied(x, y, 1, 1, map);
 };
 
 const iterate = (prev: Space[][]): Space[][] => {
@@ -48,7 +62,7 @@ const iterate = (prev: Space[][]): Space[][] => {
                 next[y][x] = 'floor';
             } else if (space === 'empty' && neighbors === 0) {
                 next[y][x] = 'occupied';
-            } else if (space === 'occupied' && neighbors >= 4) {
+            } else if (space === 'occupied' && neighbors >= 5) {
                 next[y][x] = 'empty';
             } else {
                 next[y][x] = space;
@@ -80,7 +94,7 @@ const countOccupied = (map: Space[][]) => {
     let sum = 0;
     for (let y = 0; y < map.length; y++) {
         for (let x = 0; x < map[y].length; x++) {
-            sum += isOccupied(x, y, map);
+            sum += isOccupied2(x, y, map) === 'occupied' ? 1 : 0;
         }
     }
     return sum;

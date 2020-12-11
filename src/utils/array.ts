@@ -147,23 +147,6 @@ export const product = (arr: number[]) => arr.reduce((a, b) => a * b, 1);
 
 export const truthy = (val: any) => !!val;
 
-export const splitDoubleNewline = function *splitDoubleNewline(lines: string[]): Generator<string[], void, void> {
-    let chunk: string[] = [];
-    for (const line of lines) {
-        if (line === '') {
-            if (chunk.length) {
-                yield chunk;
-                chunk = [];
-            }
-        } else {
-            chunk.push(line);
-        }
-    }
-    if (chunk.length) {
-        yield chunk;
-    }
-};
-
 export type Collection<T> = Set<T> | Array<T>;
 
 const isSet = <T>(c: Collection<T>): c is Set<T> => c.constructor.name === 'Set';
@@ -188,3 +171,10 @@ export const subtract = <T>(collection: Collection<T>, ...others: Collection<T>[
     others.forEach(other => other.forEach((item: T) => remainder.delete(item)));
     return remainder;
 };
+
+export class Counter<T> extends Map<T, number> {
+    increment(key: T, num: number = 1) {
+        const oldValue = this.get(key) || 0;
+        this.set(key, oldValue + num);
+    }
+}

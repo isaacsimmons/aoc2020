@@ -1,10 +1,11 @@
+import { Counter, Grid } from '../utils/array';
 import { readInputLines } from '../utils/file';
 
 const inputLines = readInputLines();
 
 type Space = 'floor' | 'empty' | 'occupied';
 
-const parse = (s: string): Space => {
+const parseSpace = (s: string): Space => {
     switch (s) {
         case '.':
             return 'floor';
@@ -13,28 +14,29 @@ const parse = (s: string): Space => {
         case '#':
             return 'occupied';
         default:
-            throw new Error('bad char' + s);
+            throw new Error('bad char ' + s);
     }
-}
-
-const parseRow = (s: string): Space[] => {
-    return [...s].map(parse);
 };
 
-const map = inputLines.map(parseRow);
-
-
-const isOccupied2 = (x: number, y: number, map: Space[][]): Space | null => {
-    if (y < 0 || x < 0 || y >= map.length || x >= map[0].length) {
-        return null;
+const renderSpace = (s: Space): string => {
+    switch (s) {
+        case 'empty':
+            return 'L';
+        case 'occupied':
+            return '#';
+        case 'floor':
+            return '.';
+        default:
+            throw new Error('bad space ' + s);
     }
-    return map[y][x];
 };
 
-const isOccupied = (x: number, y: number, dx: number, dy: number, map: Space[][]): number => {
+const inputValues = inputLines.map(row => [...row].map(parseSpace));
+
+const isOccupied = (x: number, y: number, dx: number, dy: number, map: Grid<Space>): number => {
     let d = 1;
     while (true) {
-        const space = isOccupied2(x + dx * d, y + dy * d, map);
+        const space = map.get({x: x + dx * d, y: y + dy * d});
         if (space === null || space === 'empty') {
             return 0;
         }
@@ -45,65 +47,41 @@ const isOccupied = (x: number, y: number, dx: number, dy: number, map: Space[][]
     }
 };
 
-const countAdjacentOccupied = (x: number, y: number, map: Space[][]): number => {
+const countAdjacentOccupied = (x: number, y: number, map: Grid<Space>): number => {
     return isOccupied(x, y, -1, -1, map) + isOccupied(x, y, -1, 0, map) + isOccupied(x, y, -1, 1, map)
      + isOccupied(x, y, 0, -1, map) + isOccupied(x, y, 0, 1, map)
     + isOccupied(x, y, 1, -1, map) + isOccupied(x, y, 1, 0, map) + isOccupied(x, y, 1, 1, map);
 };
 
-const iterate = (prev: Space[][]): Space[][] => {
-    const next: Space[][] = [];
-    for (let y = 0; y < prev.length; y++) {
-        next[y] = [];
-        for (let x = 0; x < prev[y].length; x++) {
-            const space = prev[y][x];
-            const neighbors = countAdjacentOccupied(x, y, prev);
-            if (space === 'floor') {
-                next[y][x] = 'floor';
-            } else if (space === 'empty' && neighbors === 0) {
-                next[y][x] = 'occupied';
-            } else if (space === 'occupied' && neighbors >= 5) {
-                next[y][x] = 'empty';
-            } else {
-                next[y][x] = space;
-            }
+const iterate = (prev: Grid<Space>): Grid<Space> => {
+    const next = prev.copy();
+    for (const {x, y, value} of next.iter()) {
+        const neighbors = countAdjacentOccupied(x, y, prev);
+        if (value === 'empty' && neighbors === 0) {
+            next.set({x, y}, 'occupied');
+        } else if (value === 'occupied' && neighbors >= 5) {
+            next.set({x, y}, 'empty');
         }
     }
     return next;
 };
 
-const mapEquals = (map1: Space[][], map2: Space[][]): boolean => {
-    if (map1.length !== map2.length) {
-        return false;
-    }
-    for (let y = 0; y < map1.length; y++) {
-        if (map1[y].length !== map2[y].length) {
-            return false;
-        }
-        for (let x = 0; x < map1[y].length; x++) {
-            if (map1[y][x] !== map2[y][x]) {
-                return false;
-            }
-        }
-    }
-    return true;
-};
-
-
-const countOccupied = (map: Space[][]) => {
-    let sum = 0;
-    for (let y = 0; y < map.length; y++) {
-        for (let x = 0; x < map[y].length; x++) {
-            sum += isOccupied2(x, y, map) === 'occupied' ? 1 : 0;
-        }
-    }
-    return sum;
+const countOccupied = (map: Grid<Space>) => {
+    const sums = new Counter<Space>();
+    sums.addAll([...map.iter()].map(({value}) => value));
+    return sums.get('occupied') || 0;
 }
 
-let prev = map;
+const writeGrid = (grid: Grid<Space>) => {
+    const rows = grid.to2d();
+    rows.forEach(row => console.log(row.map(renderSpace).join('')));
+    console.log();
+};
+
+let prev = Grid.from2d(inputValues);
 let next = iterate(prev);
-while (!mapEquals(prev, next)) {
+while (!prev.equals(next)) {
     prev = next;
     next = iterate(prev);
 }
-console.log(next, countOccupied(next));
+console.log(countOccupied(next));

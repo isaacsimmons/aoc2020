@@ -177,4 +177,73 @@ export class Counter<T> extends Map<T, number> {
         const oldValue = this.get(key) || 0;
         this.set(key, oldValue + num);
     }
+
+    addAll(keys: T[], num: number = 1) {
+        keys.forEach(key => this.increment(key, num));
+    }
+}
+
+export interface Coordinate {
+    x: number;
+    y: number;
+}
+
+export class Grid<T> {
+    private constructor(public readonly width: number, public readonly height: number, public readonly values: T[]) {
+        if (values.length !== width * height) {
+            throw new Error('Invalid initial grid data');
+        }
+    }
+
+    private getOffset({x, y}: Coordinate): number | null {
+        if (y < 0 || x < 0 || y >= this.height || x >= this.width) {
+            return null;
+        }
+        return y * this.width + x;
+    }
+
+    public get(c: Coordinate): T | null {
+        const offset = this.getOffset(c);
+        if (offset === null) {
+            return null;
+        }
+        return this.values[offset];
+    }
+
+    public set(c: Coordinate, value: T) {
+        const offset = this.getOffset(c);
+        if (offset === null) {
+            throw new Error(`tried to set value out of bounds (${c.x}, ${c.y})`);
+        }
+        this.values[offset] = value;
+    }
+
+    public *iter(): Generator<Coordinate & {value: T}, void, void> {
+        for (let y = 0; y < this.height; y++) {                
+            for (let x = 0; x < this.width; x++) {
+                const offset = this.getOffset({x, y})!;
+                yield {x, y, value: this.values[offset]};
+            }
+        }
+    }
+
+    public copy(): Grid<T> {
+        return new Grid(this.width, this.height, [...this.values]);
+    }
+
+    public to2d(): T[][] {
+        return chunk(this.values, this.width)
+    } 
+
+    public static from2d<T>(values: T[][]): Grid<T> {
+        const height = values.length;
+        const width = height > 0 ? values[0].length : 0;
+        // TODO: check that the width of every row is the same?
+        const merged = ([] as T[]).concat(...values);
+        return new Grid(width, height, merged);
+    }
+
+    public equals(other: Grid<T>) {
+        return equals(this.values, other.values);
+    }
 }

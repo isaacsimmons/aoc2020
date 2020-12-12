@@ -1,4 +1,4 @@
-import { Counter, Grid } from '../utils/array';
+import { Coordinate, Counter, Grid, sum } from '../utils/array';
 import { readInputLines } from '../utils/file';
 
 const inputLines = readInputLines();
@@ -20,24 +20,24 @@ const parseSpace = (s: string): Space => {
     }
 };
 
-const isOccupied = (x: number, y: number, dx: number, dy: number, map: Grid<Space>): number => {
-    let d = 1;
+const isOccupied = ({x, y}: Coordinate, dx: number, dy: number, map: Grid<Space>): boolean => {
     while (true) {
-        const space = map.get({x: x + dx * d, y: y + dy * d});
+        x += dx;
+        y += dy;
+        const space = map.get({x, y});
         if (space === null || space === Space.EMPTY) {
-            return 0;
+            return false;
         }
         if (space === Space.OCCUPIED) {
-            return 1;
+            return true;
         }
-        d++;
     }
 };
 
-const countAdjacentOccupied = (x: number, y: number, map: Grid<Space>): number => {
-    return isOccupied(x, y, -1, -1, map) + isOccupied(x, y, -1, 0, map) + isOccupied(x, y, -1, 1, map)
-     + isOccupied(x, y, 0, -1, map) + isOccupied(x, y, 0, 1, map)
-    + isOccupied(x, y, 1, -1, map) + isOccupied(x, y, 1, 0, map) + isOccupied(x, y, 1, 1, map);
+const countVisibleOccupied = (c: Coordinate, map: Grid<Space>): number => {
+    const headings = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+    const occupied = headings.map(([dx, dy]) => isOccupied(c, dx, dy, map));
+    return sum(occupied.map(val => val ? 1 : 0));
 };
 
 const iterate = (prev: Grid<Space>): Grid<Space> => {
@@ -47,7 +47,7 @@ const iterate = (prev: Grid<Space>): Grid<Space> => {
             // Little optimization -- no need to count adjacent seats for floor spaces
             continue;
         }
-        const neighbors = countAdjacentOccupied(x, y, prev);
+        const neighbors = countVisibleOccupied({x, y}, prev);
         if (value === Space.EMPTY && neighbors === 0) {
             next.set({x, y}, Space.OCCUPIED);
         } else if (value === Space.OCCUPIED && neighbors >= 5) {
@@ -74,11 +74,17 @@ const readGrid = <T>(lines: string[], parser: (s: string) => T): Grid<T> => {
     return Grid.from2d(values);
 };
 
-let prev = readGrid(inputLines, parseSpace);
-let next = iterate(prev);
-while (!prev.equals(next)) {
-    prev = next;
-    next = iterate(prev);
-}
-writeGrid(next, value => value);
-console.log(countOccupied(next));
+const iterateUntilDone = (map: Grid<Space>) => {
+    let prev = map.copy();
+    let next = iterate(prev);
+    while (!prev.equals(next)) {
+        prev = next;
+        next = iterate(prev);
+    }
+    return next;
+};
+
+const inputMap = readGrid(inputLines, parseSpace);
+const finalMap = iterateUntilDone(inputMap);
+//writeGrid(finalMap, value => value);
+console.log(countOccupied(finalMap));

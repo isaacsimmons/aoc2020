@@ -1,4 +1,4 @@
-import { sum } from '../utils/array';
+import { range, sum } from '../utils/array';
 import { readInputLines } from '../utils/file';
 import { leftPad } from '../day5/main';
 
@@ -27,22 +27,31 @@ const parseBitmask = (line: string): PartialBitmask => {
     return [...maskString] as PartialBitmask;
 };
 
-
-const applyMask = (value: number, mask: PartialBitmask) => {
-    const valueBits = [...leftPad(value.toString(2), 36, '0')];
+const applyMaskInner = (value: string[], mask: PartialBitmask, permutation: string[]): number => {
     const result: string[] = [];
+
+    let xi = 0;
     for (let i = 0; i < 36; i++) {
-        if (mask[i] === '1') {
+        if (mask[i] === '0') {
+            result[i] = value[i];
+        } else if (mask[i] === '1') {
             result[i] = '1';
-        } else if (mask[i] === '0') {
-            result[i] = '0';
         } else {
-            result[i] = valueBits[i];
+            result[i] = permutation[xi];
+            xi++;
         }
     }
 
     const resultString = result.join('');
     return parseInt(resultString, 2);
+};
+
+const applyMask = (value: number, mask: PartialBitmask): number[] => {
+    const valueBits = [...leftPad(value.toString(2), 36, '0')];
+    const xCount = mask.filter(char => char === 'X').length;
+    const numPermutations = Math.pow(2, xCount);
+
+    return range(numPermutations).map(permutation => applyMaskInner(valueBits, mask, [...leftPad(permutation.toString(2), xCount, '0')]));
 };
 
 const runInstruction = (line: string) => {
@@ -52,7 +61,11 @@ const runInstruction = (line: string) => {
     } else {
         const {address, value} = parseInstruction(line);
 //        console.log('instruction', {address, value}, 'mask', mask);
-        memory.set(address, applyMask(value, mask));
+console.log('applying', address, mask);
+        const decodedAddresses = applyMask(address, mask);
+        console.log('got', decodedAddresses);
+
+        decodedAddresses.forEach(decodedAddress => memory.set(decodedAddress, value));
     }
 };
 
@@ -65,5 +78,3 @@ console.log(memory);
 
 const memoryTotal = sum([...memory.values()]);
 console.log('sum', memoryTotal);
-
-// 332440436143 too low

@@ -4,7 +4,7 @@ import { readInputLines } from '../utils/file';
 const inputLines = readInputLines();
 
 interface Position {
-    heading: Direction;
+    waypoint: Coordinate;
     location: Coordinate;
 }
 
@@ -40,9 +40,9 @@ const parseInstruction = (s: string): Instruction => {
     };
 };
 
-const turn = (heading: Direction, command: 'L' | 'R', amount: number): Direction => {
+const turn = (waypoint: Coordinate, command: 'L' | 'R', amount: number): Coordinate => {
     if (amount === 0) {
-        return heading;
+        return waypoint;
     }
     if (amount < 0) {
         throw new Error('negative turns not supported');
@@ -51,42 +51,28 @@ const turn = (heading: Direction, command: 'L' | 'R', amount: number): Direction
         throw new Error('non-right-angle turns not supported');
     }
     const times = amount / 90;
-    let result = heading;
+    let result = waypoint;
     for (let i = 0; i < times; i++) {
         result = turn90(result, command);
     }
     return result;
 };
 
-const turn90 = (heading: Direction, command: 'L' | 'R'): Direction => {
-    if (heading === 'N' && command === 'R') {
-        return 'E';
+const turn90 = (waypoint: Coordinate, command: 'L' | 'R'): Coordinate => {
+    if (command === 'L') { // Bleh, my coorinate system is effed up
+        return {
+            x: waypoint.y,
+            y: waypoint.x * -1,
+        };
+    } else {
+        return {
+            x: waypoint.y * -1,
+            y: waypoint.x,
+        };
     }
-    if (heading === 'N' && command === 'L') {
-        return 'W';
-    }
-    if (heading === 'E' && command === 'R') {
-        return 'S';
-    }
-    if (heading === 'E' && command === 'L') {
-        return 'N';
-    }
-    if (heading === 'S' && command === 'R') {
-        return 'W';
-    }
-    if (heading === 'S' && command === 'L') {
-        return 'E';
-    }
-    if (heading === 'W' && command === 'R') {
-        return 'N';
-    }
-    if (heading === 'W' && command === 'L') {
-        return 'S';
-    }
-    throw new Error('missed a case?');
 };
 
-const moveHeading = ({x, y}: Coordinate, direction: Direction, distance: number): Coordinate => {
+const adjustWaypoint = ({x, y}: Coordinate, direction: Direction, distance: number): Coordinate => {
     switch (direction) {
         case 'E':
             return {
@@ -113,26 +99,33 @@ const moveHeading = ({x, y}: Coordinate, direction: Direction, distance: number)
     }
 };
 
+const moveToWaypoint = ({location, waypoint}: Position, distance: number): Coordinate => {
+    return {
+        x: location.x + waypoint.x * distance,
+        y: location.y + waypoint.y * distance,
+    };
+};
 
-const move = ({heading, location}: Position, instruction: Instruction): Position => {
+
+const move = ({waypoint, location}: Position, instruction: Instruction): Position => {
     switch (instruction.command) {
         case 'S':
         case 'N':
         case 'E':
         case 'W':
             return {
-                heading,
-                location: moveHeading(location, instruction.command, instruction.value),
+                waypoint: adjustWaypoint(waypoint, instruction.command, instruction.value), // TODO: that should just take instruction
+                location,
             };
         case 'F':
             return {
-                heading,
-                location: moveHeading(location, heading, instruction.value),
+                waypoint,
+                location: moveToWaypoint({location, waypoint}, instruction.value),
             };
         case 'L':
         case 'R':
             return {
-                heading: turn(heading, instruction.command, instruction.value),
+                waypoint: turn(waypoint, instruction.command, instruction.value),
                 location,
             };
     }
@@ -141,11 +134,12 @@ const move = ({heading, location}: Position, instruction: Instruction): Position
 const instructions = inputLines.map(parseInstruction);
 const initialPosition: Position = {
     location: {x: 0, y: 0},
-    heading: 'E',
+    waypoint: { x: 10, y: -1},
 };
 
 let position = initialPosition;
 instructions.forEach(instruction => {
+    console.log('moving', position);
     position = move(position, instruction);
 });
 console.log('done', position);

@@ -18,7 +18,7 @@ const idToSeat = (id: number): Seat => ({
     column: id % 8,
 });
 
-const leftPad = (s: string, length: number, padding: string) => {
+export const leftPad = (s: string, length: number, padding: string) => {
     if (s.length >= length) {
         return s;
     }

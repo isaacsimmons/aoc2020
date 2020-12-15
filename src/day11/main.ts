@@ -20,7 +20,7 @@ const parseSpace = (s: string): Space => {
     }
 };
 
-const isOccupied = ({x, y}: Coordinate, dx: number, dy: number, map: Grid<Space>): boolean => {
+const isOccupiedHeading = ({x, y}: Coordinate, dx: number, dy: number, map: Grid<Space>): boolean => {
     while (true) {
         x += dx;
         y += dy;
@@ -36,8 +36,8 @@ const isOccupied = ({x, y}: Coordinate, dx: number, dy: number, map: Grid<Space>
 
 const countVisibleOccupied = (c: Coordinate, map: Grid<Space>): number => {
     const headings = [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
-    const occupied = headings.map(([dx, dy]) => isOccupied(c, dx, dy, map));
-    return sum(occupied.map(val => val ? 1 : 0));
+    const occupied = headings.map(([dx, dy]) => isOccupiedHeading(c, dx, dy, map) ? 1 : 0);
+    return sum(occupied);
 };
 
 const iterate = (prev: Grid<Space>): Grid<Space> => {
@@ -69,10 +69,8 @@ const writeGrid = <T>(grid: Grid<T>, renderer: (value: T) => string) => {
     console.log();
 };
 
-const readGrid = <T>(lines: string[], parser: (s: string) => T): Grid<T> => {
-    const values = lines.map(row => [...row].map(parser));
-    return Grid.from2d(values);
-};
+const readGrid = <T>(lines: string[], parser: (s: string) => T): Grid<T> => 
+    Grid.from2d(lines.map(row => [...row].map(parser)));
 
 const iterateUntilDone = (map: Grid<Space>) => {
     let prev = map.copy();
@@ -86,5 +84,5 @@ const iterateUntilDone = (map: Grid<Space>) => {
 
 const inputMap = readGrid(inputLines, parseSpace);
 const finalMap = iterateUntilDone(inputMap);
-//writeGrid(finalMap, value => value);
+writeGrid(finalMap, value => value);
 console.log(countOccupied(finalMap));

@@ -7,12 +7,13 @@ interface Point {
     x: number;
     y: number;
     z: number;
+    hyper: number;
 }
 
-const pointToString = ({x, y, z}: Point) => [x, y, z].join('_');
+const pointToString = ({x, y, z, hyper}: Point) => [x, y, z, hyper].join('_');
 const stringToPoint = (s: string) => {
-    const [x, y, z] = s.split('_').map(Number);
-    return {x, y, z};
+    const [x, y, z, hyper] = s.split('_').map(Number);
+    return {x, y, z, hyper};
 };
 
 // const neighbors = ({x, y, z}: Point): Point[] => {
@@ -29,23 +30,25 @@ const stringToPoint = (s: string) => {
 //     return points;
 // };
 
-const minus1 = ({x, y, z}: Point): Point => ({x: x - 1, y: y - 1, z: z - 1});
-const plus1 = ({x, y, z}: Point): Point => ({x: x + 1, y: y + 1, z: z + 1});
+const minus1 = ({x, y, z, hyper}: Point): Point => ({x: x - 1, y: y - 1, z: z - 1, hyper: hyper - 1});
+const plus1 = ({x, y, z, hyper}: Point): Point => ({x: x + 1, y: y + 1, z: z + 1, hyper: hyper + 1});
 
 const neighbors = function *neighbors(p: Point): Generator<Point, void, void> {
     yield *pointsInRange(minus1(p), plus1(p), p);
 };
 
 const pointsInRange = function *pointsInRange(
-    {x: minX, y: minY, z: minZ}: Point,
-    {x: maxX, y: maxY, z: maxZ}: Point,
+    {x: minX, y: minY, z: minZ, hyper: minHyper}: Point,
+    {x: maxX, y: maxY, z: maxZ, hyper: maxHyper}: Point,
     exclude?: Point
 ): Generator<Point, void, void> {
     for (let x = minX; x <= maxX; x++) {
         for (let y = minY; y <= maxY; y++) {
             for (let z = minZ; z <= maxZ; z++) {
-                if (!exclude || x !== exclude.x || y !== exclude.y || z !== exclude.z) {
-                    yield {x, y, z};
+                for (let hyper = minHyper; hyper <= maxHyper; hyper++) {
+                    if (!exclude || x !== exclude.x || y !== exclude.y || z !== exclude.z || hyper !== exclude.hyper) {
+                        yield {x, y, z, hyper};
+                    }
                 }
             }       
         }    
@@ -56,13 +59,14 @@ const combine = (fn: (...values: number[]) => number, ...points: Point[]): Point
     x: fn(...points.map(value => value.x)),
     y: fn(...points.map(value => value.y)),
     z: fn(...points.map(value => value.z)),
+    hyper: fn(...points.map(value => value.hyper)),
 });
 
 class Space {
     public readonly active = new Set<string>();
 
-    public min: Point = {x: Number.MAX_SAFE_INTEGER, y: Number.MAX_SAFE_INTEGER, z: Number.MAX_SAFE_INTEGER};
-    public max: Point = {x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER, z: Number.MIN_SAFE_INTEGER};
+    public min: Point = {x: Number.MAX_SAFE_INTEGER, y: Number.MAX_SAFE_INTEGER, z: Number.MAX_SAFE_INTEGER, hyper: Number.MAX_SAFE_INTEGER};
+    public max: Point = {x: Number.MIN_SAFE_INTEGER, y: Number.MIN_SAFE_INTEGER, z: Number.MIN_SAFE_INTEGER, hyper: Number.MIN_SAFE_INTEGER};
     
     public add = (point: Point) => {
         this.min = combine(Math.min, point, this.min);
@@ -86,7 +90,7 @@ const sliceToSpace = (slice: boolean[][]): Space => {
     for (let y = 0; y < slice.length; y++) {
         for (let x = 0; x < slice[y].length; x++) {
             if (slice[y][x]) {
-                space.add({x, y, z: 0});
+                space.add({x, y, z: 0, hyper: 0});
             }
         }
     }
